@@ -28,7 +28,8 @@ end
 function _try_build_symbolic_sparse_jacobian(fun::Function, nvar::Integer)
   try
     return _build_symbolic_sparse_jacobian(fun, nvar)
-  catch
+  catch err
+    @warn "_build_symbolic_sparse_jacobian failed; falling back to non-symbolic Jacobian" exception = err function = fun nvar = nvar
     return nothing
   end
 end
