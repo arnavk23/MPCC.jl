@@ -1,6 +1,8 @@
 struct SymbolicSparseJacobianCache{TX,TJ}
   xvars::TX
   jac::TJ
+  compiled_funcs::Vector{Function}
+  template_matrix::SparseMatrixCSC{Float64,Int}
 end
 
 mutable struct ADMPCCModel{T,S,Si,FG<:Function,FH<:Function,SG,SH} <: AbstractMPCCModel{T,S}
@@ -22,7 +24,18 @@ function _build_symbolic_sparse_jacobian(fun::Function, nvar::Integer)
   xvars = collect(Symbolics.variables(:x, 1:nvar))
   y = fun(xvars)
   jac = Symbolics.sparsejacobian(y, xvars)
-  return SymbolicSparseJacobianCache(xvars, jac)
+  compiled_funcs = Vector{Function}(undef, length(jac.nzval))
+  for i = 1:length(jac.nzval)
+    compiled_funcs[i] = Symbolics.build_function(jac.nzval[i], xvars; expression=Val{false})[1]
+  end
+  template_matrix = SparseMatrixCSC(
+    size(jac, 1),
+    size(jac, 2),
+    jac.colptr,
+    jac.rowval,
+    zeros(Float64, length(jac.nzval))
+  )
+  return SymbolicSparseJacobianCache(xvars, jac, compiled_funcs, template_matrix)
 end
 
 function _try_build_symbolic_sparse_jacobian(fun::Function, nvar::Integer)
@@ -38,21 +51,11 @@ function _evaluate_symbolic_sparse_jacobian(
   cache::SymbolicSparseJacobianCache,
   x::AbstractVector,
 )
-  subs = Dict{Any,Any}()
-  for i = 1:length(cache.xvars)
-    subs[cache.xvars[i]] = x[i]
+  # Update nzval in template_matrix in-place
+  for i = 1:length(cache.compiled_funcs)
+    cache.template_matrix.nzval[i] = cache.compiled_funcs[i](x...)
   end
-  nzval = similar(x, length(cache.jac.nzval))
-  for i = 1:length(cache.jac.nzval)
-    nzval[i] = Symbolics.value(Symbolics.substitute(cache.jac.nzval[i], subs))
-  end
-  return SparseMatrixCSC(
-    size(cache.jac, 1),
-    size(cache.jac, 2),
-    copy(cache.jac.colptr),
-    copy(cache.jac.rowval),
-    nzval,
-  )
+  return cache.template_matrix
 end
 
 function ADMPCCModel(

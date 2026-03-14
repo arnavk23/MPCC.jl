@@ -64,6 +64,8 @@ end
 end
 
 @testset "ADMPCC tests I: no nonlinear constraints" begin
+    @test admpcc.sym_jacG !== nothing
+    @test admpcc.sym_jacH !== nothing
   f = x -> sum(x)
   x0 = ones(6)
   G(x) = [x[1]; x[3]]
