@@ -7,8 +7,10 @@ function ex3(T = Float64)
   x0 = ones(T, 3)
   f(x) = x[1] + x[2] - x[3]
   # c(x) = 1 - x[2]
-  A = sparse([-4  0 1;
-               0 -4 1])
+  A = sparse([
+    -4 0 1;
+    0 -4 1
+  ])
   lcon = -Inf * ones(T, 2)
   ucon = zeros(T, 2)
   G(x) = x[1]
