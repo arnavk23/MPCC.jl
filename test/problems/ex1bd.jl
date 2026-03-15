@@ -10,7 +10,6 @@ function ex1bd(T = Float64)
   return ADMPCCModel(G, H, lccG, lccH, f, x0, lvar = lvar, uvar = uvar)
 end
 
-#=
 function ex1bd()
 
   ex1bd = JuMP.Model()
@@ -31,4 +30,3 @@ function ex1bd()
 
   return MPCCNLPs(ex1bd, G, H)
 end
-=#

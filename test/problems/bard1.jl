@@ -20,8 +20,6 @@ function bard1(T = Float64)
   return ADMPCCModel(G, H, lccG, lccH, f, x0, A, lcon, ucon)
 end
 
-#=
-#Bard1 (MacMPEC)
 function bard1()
 
   ex3 = JuMP.Model()
@@ -46,4 +44,3 @@ function bard1()
 
   return MPCCNLPs(ex3, G, H)
 end
-=#

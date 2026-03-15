@@ -8,7 +8,6 @@ function ex2(T = Float64)
   return ADMPCCModel(G, H, lccG, lccH, f, x0)
 end
 
-#=
 function ex2()
 
   ex2 = JuMP.Model()
@@ -28,4 +27,3 @@ function ex2()
 
   return MPCCNLPs(ex2, G, H)
 end
-=#

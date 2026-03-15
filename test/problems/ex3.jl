@@ -20,7 +20,6 @@ function ex3(T = Float64)
   return ADMPCCModel(G, H, lccG, lccH, f, x0, A, lcon, ucon)
 end
 
-#=
 function ex3()
 
   ex3 = JuMP.Model()
@@ -42,4 +41,3 @@ function ex3()
 
   return MPCCNLPs(ex3, G, H)
 end
-=#
