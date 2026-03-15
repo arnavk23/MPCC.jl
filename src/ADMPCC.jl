@@ -26,14 +26,15 @@ function _build_symbolic_sparse_jacobian(fun::Function, nvar::Integer)
   jac = Symbolics.sparsejacobian(y, xvars)
   compiled_funcs = Vector{Function}(undef, length(jac.nzval))
   for i = 1:length(jac.nzval)
-    compiled_funcs[i] = Symbolics.build_function(jac.nzval[i], xvars; expression=Val{false})[1]
+    compiled_funcs[i] =
+      Symbolics.build_function(jac.nzval[i], xvars; expression = Val{false})[1]
   end
   template_matrix = SparseMatrixCSC(
     size(jac, 1),
     size(jac, 2),
     jac.colptr,
     jac.rowval,
-    zeros(Float64, length(jac.nzval))
+    zeros(Float64, length(jac.nzval)),
   )
   return SymbolicSparseJacobianCache(xvars, jac, compiled_funcs, template_matrix)
 end
@@ -42,7 +43,12 @@ function _try_build_symbolic_sparse_jacobian(fun::Function, nvar::Integer)
   try
     return _build_symbolic_sparse_jacobian(fun, nvar)
   catch err
-    @warn "_build_symbolic_sparse_jacobian failed; falling back to non-symbolic Jacobian" exception=err function=fun nvar=nvar
+    @warn "_build_symbolic_sparse_jacobian failed; falling back to non-symbolic Jacobian" Dict(
+      :exception => err,
+      :function => fun,
+      :nvar => nvar,
+      :backtrace => bt,
+    )
     return nothing
   end
 end
@@ -138,8 +144,8 @@ function jacG_structure!(
 )
   m, n = nlp.cc_meta.ncc, nlp.meta.nvar
   I = ((i, j) for i = 1:m, j = 1:n)
-  rows[1:n*m] .= getindex.(I, 1)[:]
-  cols[1:n*m] .= getindex.(I, 2)[:]
+  rows[1:(n*m)] .= getindex.(I, 1)[:]
+  cols[1:(n*m)] .= getindex.(I, 2)[:]
   return rows, cols
 end
 
@@ -147,7 +153,7 @@ function jacG_coord!(nlp::ADMPCCModel, x::AbstractVector, vals::AbstractVector)
   m, n = nlp.cc_meta.ncc, nlp.meta.nvar
   increment_cc!(nlp, :neval_jacG)
   Jx = ForwardDiff.jacobian(nlp.G, x)
-  vals[1:n*m] .= Jx[:]
+  vals[1:(n*m)] .= Jx[:]
   return vals
 end
 
@@ -158,8 +164,8 @@ function jacH_structure!(
 )
   m, n = nlp.cc_meta.ncc, nlp.meta.nvar
   I = ((i, j) for i = 1:m, j = 1:n)
-  rows[1:n*m] .= getindex.(I, 1)[:]
-  cols[1:n*m] .= getindex.(I, 2)[:]
+  rows[1:(n*m)] .= getindex.(I, 1)[:]
+  cols[1:(n*m)] .= getindex.(I, 2)[:]
   return rows, cols
 end
 
@@ -167,7 +173,7 @@ function jacH_coord!(nlp::ADMPCCModel, x::AbstractVector, vals::AbstractVector)
   m, n = nlp.cc_meta.ncc, nlp.meta.nvar
   increment_cc!(nlp, :neval_jacH)
   Jx = ForwardDiff.jacobian(nlp.H, x)
-  vals[1:n*m] .= Jx[:]
+  vals[1:(n*m)] .= Jx[:]
   return vals
 end
 
@@ -267,7 +273,7 @@ function hess_coord!(
   ncon, ncc = nlp.meta.ncon, nlp.cc_meta.ncc
   ℓ(x) =
     ADNLPModels.get_lag(nlp.nlp, nlp.nlp.adbackend.hessian_backend, obj_weight)(x) -
-    dot(nlp.G(x), y[ncon+1:ncon+ncc]) - dot(nlp.H(x), y[ncon+ncc+1:ncon+2*ncc])
+    dot(nlp.G(x), y[(ncon+1):(ncon+ncc)]) - dot(nlp.H(x), y[(ncon+ncc+1):(ncon+2*ncc)])
   Hx = ForwardDiff.hessian(ℓ, x)
   k = 1
   for j = 1:nlp.meta.nvar
@@ -371,7 +377,7 @@ function hprod!(
   end
   ℓ(x) =
     ADNLPModels.get_lag(nlp.nlp, nlp.nlp.adbackend.hessian_backend, obj_weight)(x) -
-    dot(nlp.G(x), y[ncon+1:ncon+ncc]) - dot(nlp.H(x), y[ncon+ncc+1:ncon+2*ncc])
+    dot(nlp.G(x), y[(ncon+1):(ncon+ncc)]) - dot(nlp.H(x), y[(ncon+ncc+1):(ncon+2*ncc)])
   Hv .= ForwardDiff.derivative(t -> ForwardDiff.gradient(ℓ, x + t * v), 0)
   return Hv
 end
