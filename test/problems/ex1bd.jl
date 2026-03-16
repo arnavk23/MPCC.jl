@@ -14,7 +14,7 @@ function ex1bd()
 
   ex1bd = JuMP.Model()
   ux(i) = [Inf; 1][i]
-  JuMP.@variable(ex1bd, x[i = 1:2], upper_bound = ux(i), start = 1.0)
+  JuMP.@variable(ex1bd, x[i=1:2], upper_bound = ux(i), start = 1.0)
   JuMP.@NLobjective(ex1bd, Min, x[1] - x[2])
   ex1bd = MathOptNLPModel(ex1bd)#MathProgNLPModel(ex1bd)
   G = JuMP.Model()
